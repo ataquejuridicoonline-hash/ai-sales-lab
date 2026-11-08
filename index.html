@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101526">
+<meta name="robots" content="noindex,nofollow">
+<meta name="description" content="AI Sales Lab — painel de comando de agentes de marketing para Air Fryer Todo Dia.">
+<title>AI SALES LAB | Central de operações</title>
+<link rel="stylesheet" href="/styles.css">
+<script src="/app.js" defer></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand"><span class="mark">✳</span><span><strong>AI SALES LAB</strong><small>Marketing intelligence</small></span></div>
+    <div class="workspace"><small>WORKSPACE</small><b>Air Fryer Todo Dia</b><span>Produto digital · R$ 19,90</span></div>
+    <nav aria-label="Navegação principal">
+      <button class="nav active" data-view="overview"><span class="nav-symbol">▦</span> Visão geral</button>
+      <button class="nav" data-view="agents"><span class="nav-symbol">◇</span> Agentes</button>
+      <button class="nav" data-view="tasks"><span class="nav-symbol">☷</span> Tarefas <span class="nav-counter" id="task-counter">0</span></button>
+      <button class="nav" data-view="approvals"><span class="nav-symbol">✓</span> Aprovações <span class="nav-counter" id="approval-counter">0</span></button>
+      <button class="nav" data-view="integrations"><span class="nav-symbol">⌁</span> Integrações</button>
+    </nav>
+    <div class="sidebar-bottom"><span class="dot dot-amber"></span><div><b>Modo de preparação</b><small>Nenhum agente publica ou altera anúncios</small></div></div>
+  </aside>
+  <div class="main-wrap">
+    <header class="topbar"><div class="topbar-left"><button class="mobile-toggle" id="mobile-toggle" aria-label="Abrir menu">☰</button><span class="breadcrumb">AGENCY / <b id="breadcrumb">VISÃO GERAL</b></span></div><div class="topbar-right"><span class="live-label"><span class="dot dot-amber"></span> Dados históricos · sem sincronização</span><span class="avatar" title="Administrador">ADM</span></div></header>
+    <main class="content">
+      <section class="view" id="view-overview">
+        <div class="title-line"><div><p class="eyebrow">CENTRAL DE OPERAÇÕES</p><h1>Seu negócio. Uma equipe de agentes.</h1><p class="subtitle">O começo da operação inteligente de vendas do e-book Air Fryer Todo Dia.</p></div><button class="button primary" data-action="new-task">+ Nova tarefa</button></div>
+        <div class="notice"><strong>Versão inicial sem integrações ativas.</strong> Os números abaixo são um registro histórico da última consulta informada em 08/11/2026, não indicadores em tempo real. Tarefas e aprovações ficam apenas neste navegador.</div>
+        <div class="metrics">
+          <article class="metric"><span>Investimento histórico</span><strong>R$ 43,68</strong><small>Meta Ads · 05–08/11</small></article>
+          <article class="metric"><span>Compras atribuídas</span><strong>1</strong><small>Meta Ads · não conciliado</small></article>
+          <article class="metric"><span>Receita líquida estimada</span><strong>R$ 15,62</strong><small>Após taxa Kiwify estimada</small></article>
+          <article class="metric metric-negative"><span>Resultado após mídia</span><strong>− R$ 28,06</strong><small>Antes de impostos e outros custos</small></article>
+        </div>
+        <div class="columns">
+          <section class="panel"><div class="panel-title"><div><p class="eyebrow">ORQUESTRAÇÃO</p><h2>Equipe de agentes</h2></div><button class="link-button" data-target="agents">Ver equipe →</button></div><div class="agent-mini" id="agent-mini"></div></section>
+          <section class="panel"><div class="panel-title"><div><p class="eyebrow">ROTINA</p><h2>Fila de trabalho</h2></div><button class="link-button" data-target="tasks">Ver tarefas →</button></div><div id="overview-tasks"></div></section>
+        </div>
+        <div class="panel decision"><span class="decision-icon">!</span><div><p class="eyebrow">PRIORIDADE OPERACIONAL</p><h2>Resolver a medição antes de escalar investimento</h2><p>Comparar cliques de saída na Meta com visitas registradas no Web Analytics da Vercel. Não alterar orçamento ou posicionamentos automaticamente.</p></div><button class="button secondary" data-action="diagnostic">Criar tarefa</button></div>
+      </section>
+      <section class="view hidden" id="view-agents">
+        <div class="title-line"><div><p class="eyebrow">TIME VIRTUAL</p><h1>Os três primeiros agentes</h1><p class="subtitle">Funções definidas, execução automatizada ainda não conectada.</p></div></div>
+        <div class="agent-grid" id="agent-grid"></div>
+        <div class="panel"><h2>Fluxo de decisão</h2><div class="steps"><div><b>1 · ATLAS</b><small>Investiga custo, cliques e conversões</small></div><div class="step-arrow">→</div><div><b>2 · CASH</b><small>Calcula margem e risco financeiro</small></div><div class="step-arrow">→</div><div><b>3 · JARVIS</b><small>Organiza ações e pede sua aprovação</small></div></div></div>
+      </section>
+      <section class="view hidden" id="view-tasks">
+        <div class="title-line"><div><p class="eyebrow">EXECUÇÃO</p><h1>Fila de tarefas</h1><p class="subtitle">Registre o trabalho. Nesta versão, tarefas são acompanhadas manualmente.</p></div><button class="button primary" data-action="new-task">+ Nova tarefa</button></div>
+        <div class="filters"><button class="filter active" data-filter="all">Todas</button><button class="filter" data-filter="open">Abertas</button><button class="filter" data-filter="done">Concluídas</button></div>
+        <div class="panel task-panel" id="task-list"></div>
+      </section>
+      <section class="view hidden" id="view-approvals">
+        <div class="title-line"><div><p class="eyebrow">GOVERNANÇA</p><h1>Central de aprovações</h1><p class="subtitle">A aprovação registrada aqui é apenas interna: nunca executa mudanças na Meta, Kiwify ou GitHub.</p></div><button class="button primary" data-action="new-approval">+ Solicitar aprovação</button></div>
+        <div class="notice">Proteção financeira: mudanças em anúncios, orçamento, página pública ou mensagens a clientes devem ser aprovadas e executadas através das integrações oficiais, que ainda não estão conectadas a este painel.</div>
+        <div id="approval-list" class="approval-list"></div>
+      </section>
+      <section class="view hidden" id="view-integrations">
+        <div class="title-line"><div><p class="eyebrow">FONTES DE DADOS</p><h1>Conexões e segurança</h1><p class="subtitle">Planejamento técnico para transformar a central em operação com dados reais.</p></div></div>
+        <div id="integration-grid" class="integration-grid"></div>
+        <div class="panel"><h2>Checklist antes de ativar agentes autônomos</h2><ul class="checklist"><li>Autenticação obrigatória e sessão privada para a central.</li><li>Tokens armazenados apenas no servidor; nunca no HTML ou JavaScript público.</li><li>Conciliação de vendas aprovadas e eventos atribuídos.</li><li>Histórico auditável das recomendações e aprovações.</li><li>Limites de gastos e confirmação humana para qualquer escrita.</li></ul></div>
+      </section>
+    </main>
+    <footer class="footer">AI SALES LAB · Primeira versão · Nenhuma conexão ativa · Dados históricos explicitamente identificados</footer>
+  </div>
+</div>
+<dialog id="form-modal" class="modal"><form id="entity-form"><div class="modal-head"><div><p class="eyebrow" id="modal-eyebrow">NOVA TAREFA</p><h2 id="modal-title">Adicionar tarefa</h2></div><button type="button" class="icon-button" id="modal-close" aria-label="Fechar">×</button></div><label for="entity-title">Título</label><input id="entity-title" maxlength="120" required placeholder="O que precisa ser feito?"/><label for="entity-owner">Responsável</label><select id="entity-owner"><option value="ATLAS">ATLAS — Tráfego</option><option value="CASH">CASH — Finanças</option><option value="JARVIS">JARVIS — Coordenação</option></select><label for="entity-description">Descrição</label><textarea id="entity-description" maxlength="700" rows="4" placeholder="Detalhe a ação ou análise necessária"></textarea><div class="modal-actions"><button type="button" class="button tertiary" id="modal-cancel">Cancelar</button><button type="submit" class="button primary">Salvar</button></div></form></dialog>
+</body>
+</html>
