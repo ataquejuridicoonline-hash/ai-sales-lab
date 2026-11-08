@@ -5,7 +5,7 @@ const num=n=>Number(n).toLocaleString('pt-BR',{maximumFractionDigits:0});
 function say(message){$('#login-message').textContent=message;}
 async function request(url,options){const response=await fetch(url,{credentials:'same-origin',cache:'no-store',...options});const data=await response.json().catch(()=>({error:'Resposta inválida do servidor'}));return {response,data};}
 async function check(){try{const {response,data}=await request('/api/auth');if(!response.ok)throw Error(data.error||'Serviço indisponível');if(!data.configured){say('Acesso ainda não configurado. Crie LAB_ADMIN_PASSWORD e LAB_SESSION_SECRET nas variáveis privadas do projeto Vercel e faça redeploy.');$('#login-submit').disabled=true;return;}if(data.authenticated){unlock();return;}say('Informe a senha administrativa configurada exclusivamente para AI SALES LAB.');}catch(e){say('Não foi possível validar a autenticação. Verifique o deploy das funções na Vercel.');}}
-function unlock(){document.body.classList.remove('auth-locked');$('#login-screen').setAttribute('hidden','');loadMetrics();}
+function unlock(){document.body.classList.remove('auth-locked');$('#login-screen').setAttribute('hidden','');loadMetrics();loadSales();}
 async function loadMetrics(){
  const button=$('#metrics-refresh');button.disabled=true;$('#data-status').textContent='Consultando dados privados da campanha...';
  try{const {response,data}=await request('/api/metrics');if(response.status===401){document.body.classList.add('auth-locked');$('#login-screen').removeAttribute('hidden');say('Sua sessão expirou. Entre novamente.');return;}
@@ -19,7 +19,17 @@ async function loadMetrics(){
  }catch(e){$('#data-status').textContent='Não foi possível obter métricas: '+e.message;}
  finally{button.disabled=false;}
 }
+async function loadSales(){
+ const button=$('#sales-refresh');button.disabled=true;$('#cash-status').textContent='Consultando vendas privadas da Kiwify...';
+ try{const {response,data}=await request('/api/sales');if(response.status===401){$('#cash-status').textContent='Sessão expirada. Entre novamente.';return;}if(!response.ok)throw Error(data.error||'Falha na Kiwify');
+ if(!data.configured){$('#cash-status').textContent=data.message||'Integração não configurada.';return;}
+ $('#cash-paid').textContent=num(data.paid);$('#cash-net').textContent=data.netAmountAvailable?brl(data.netApprovedBrl):'Não disponível';$('#cash-pending').textContent=num(data.pending);$('#cash-refunded').textContent=num(data.refunded);
+ const productNames=Object.keys(data.products||{});const multi=productNames.length>1;$('#cash-status').textContent='Kiwify API · Atualizado em '+new Date(data.fetchedAt).toLocaleString('pt-BR')+'. '+(multi?'ATENÇÃO: múltiplos produtos no relatório.':'Confira o filtro de produto na integração de origem.')+(data.incomplete?' AVISO: paginação incompleta.':'');
+ }catch(err){$('#cash-status').textContent='Não foi possível consultar vendas: '+err.message;}
+ finally{button.disabled=false;}
+}
 $('#login-form').addEventListener('submit',async e=>{e.preventDefault();const input=$('#admin-password'),button=$('#login-submit'),password=input.value;button.disabled=true;say('Validando acesso...');try{const {response,data}=await request('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});input.value='';if(!response.ok)throw Error(data.error||'Acesso recusado');unlock();}catch(err){say(err.message);}finally{button.disabled=false;}});
 $('#metrics-refresh').addEventListener('click',loadMetrics);
+$('#sales-refresh').addEventListener('click',loadSales);
 check();
 })();
