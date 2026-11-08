@@ -9,8 +9,19 @@
 <title>AI SALES LAB | Central de operações</title>
 <link rel="stylesheet" href="/styles.css">
 <script src="/app.js" defer></script>
+<script src="/live.js" defer></script>
 </head>
-<body>
+<body class="auth-locked">
+<section class="login-screen" id="login-screen" aria-label="Acesso privado">
+  <form class="login-panel" id="login-form">
+    <div class="login-brand"><span class="mark">✳</span><span><strong>AI SALES LAB</strong><small>Central privada · Air Fryer Todo Dia</small></span></div>
+    <p class="eyebrow">ACESSO RESTRITO</p><h1>Bem-vindo à central de operações.</h1>
+    <p id="login-message">Informe a senha administrativa configurada na Vercel para abrir o painel.</p>
+    <label for="admin-password">Senha administrativa</label><input id="admin-password" name="password" type="password" minlength="16" maxlength="512" required autocomplete="current-password" placeholder="Sua senha da AI SALES LAB">
+    <button type="submit" class="button primary" id="login-submit">Entrar na agência</button>
+    <small>A senha não é armazenada no navegador. A sessão usa cookie seguro HttpOnly e expira em 8 horas.</small>
+  </form>
+</section>
 <div class="shell">
   <aside class="sidebar" id="sidebar">
     <div class="brand"><span class="mark">✳</span><span><strong>AI SALES LAB</strong><small>Marketing intelligence</small></span></div>
@@ -25,17 +36,18 @@
     <div class="sidebar-bottom"><span class="dot dot-amber"></span><div><b>Modo de preparação</b><small>Nenhum agente publica ou altera anúncios</small></div></div>
   </aside>
   <div class="main-wrap">
-    <header class="topbar"><div class="topbar-left"><button class="mobile-toggle" id="mobile-toggle" aria-label="Abrir menu">☰</button><span class="breadcrumb">AGENCY / <b id="breadcrumb">VISÃO GERAL</b></span></div><div class="topbar-right"><span class="live-label"><span class="dot dot-amber"></span> Dados históricos · sem sincronização</span><span class="avatar" title="Administrador">ADM</span></div></header>
+    <header class="topbar"><div class="topbar-left"><button class="mobile-toggle" id="mobile-toggle" aria-label="Abrir menu">☰</button><span class="breadcrumb">AGENCY / <b id="breadcrumb">VISÃO GERAL</b></span></div><div class="topbar-right"><span class="live-label"><span class="dot dot-amber"></span> Aguardando integração segura</span><span class="avatar" title="Administrador">ADM</span></div></header>
     <main class="content">
       <section class="view" id="view-overview">
         <div class="title-line"><div><p class="eyebrow">CENTRAL DE OPERAÇÕES</p><h1>Seu negócio. Uma equipe de agentes.</h1><p class="subtitle">O começo da operação inteligente de vendas do e-book Air Fryer Todo Dia.</p></div><button class="button primary" data-action="new-task">+ Nova tarefa</button></div>
-        <div class="notice"><strong>Versão inicial sem integrações ativas.</strong> Os números abaixo são um registro histórico da última consulta informada em 08/11/2026, não indicadores em tempo real. Tarefas e aprovações ficam apenas neste navegador.</div>
+        <div class="notice"><strong>Medição privada.</strong> Indicadores são carregados exclusivamente do servidor após login. Não exibiremos números históricos como se fossem dados ao vivo. Tarefas e aprovações ainda ficam apenas neste navegador.</div>
         <div class="metrics">
-          <article class="metric"><span>Investimento histórico</span><strong>R$ 43,68</strong><small>Meta Ads · 05–08/11</small></article>
-          <article class="metric"><span>Compras atribuídas</span><strong>1</strong><small>Meta Ads · não conciliado</small></article>
-          <article class="metric"><span>Receita líquida estimada</span><strong>R$ 15,62</strong><small>Após taxa Kiwify estimada</small></article>
-          <article class="metric metric-negative"><span>Resultado após mídia</span><strong>− R$ 28,06</strong><small>Antes de impostos e outros custos</small></article>
+          <article class="metric"><span>Investimento · Meta</span><strong id="m-spend">—</strong><small id="m-period">Aguardando API</small></article>
+          <article class="metric"><span>Compras atribuídas</span><strong id="m-purchases">—</strong><small>Meta Ads · não conciliado</small></article>
+          <article class="metric"><span>Receita líquida estimada</span><strong id="m-net">—</strong><small>Com base na atribuição Meta</small></article>
+          <article class="metric metric-negative"><span>Resultado após mídia</span><strong id="m-profit">—</strong><small>Estimativa, não lucro contábil</small></article>
         </div>
+        <section class="panel" id="atlas-panel"><div class="panel-title"><div><p class="eyebrow">ATLAS · LEITURA DE DADOS</p><h2>Campanha Air Fryer — dados da Meta</h2></div><button class="button secondary" type="button" id="metrics-refresh">Atualizar métricas</button></div><p id="data-status" role="status">Aguardando autenticação e configuração da API da Meta.</p><div class="table-scroll"><table class="metrics-table"><thead><tr><th>Anúncio</th><th>Gasto</th><th>Cliques saída</th><th>LPV Meta</th><th>Checkout</th><th>Compras</th><th>CPA</th></tr></thead><tbody id="ads-body"><tr><td colspan="7">Sem dados conectados.</td></tr></tbody></table></div><div id="agent-insights" class="insight-list"></div></section>
         <div class="columns">
           <section class="panel"><div class="panel-title"><div><p class="eyebrow">ORQUESTRAÇÃO</p><h2>Equipe de agentes</h2></div><button class="link-button" data-target="agents">Ver equipe →</button></div><div class="agent-mini" id="agent-mini"></div></section>
           <section class="panel"><div class="panel-title"><div><p class="eyebrow">ROTINA</p><h2>Fila de trabalho</h2></div><button class="link-button" data-target="tasks">Ver tarefas →</button></div><div id="overview-tasks"></div></section>
@@ -63,7 +75,7 @@
         <div class="panel"><h2>Checklist antes de ativar agentes autônomos</h2><ul class="checklist"><li>Autenticação obrigatória e sessão privada para a central.</li><li>Tokens armazenados apenas no servidor; nunca no HTML ou JavaScript público.</li><li>Conciliação de vendas aprovadas e eventos atribuídos.</li><li>Histórico auditável das recomendações e aprovações.</li><li>Limites de gastos e confirmação humana para qualquer escrita.</li></ul></div>
       </section>
     </main>
-    <footer class="footer">AI SALES LAB · Primeira versão · Nenhuma conexão ativa · Dados históricos explicitamente identificados</footer>
+    <footer class="footer">AI SALES LAB · Acesso autenticado para APIs · Dados somente após sincronização</footer>
   </div>
 </div>
 <dialog id="form-modal" class="modal"><form id="entity-form"><div class="modal-head"><div><p class="eyebrow" id="modal-eyebrow">NOVA TAREFA</p><h2 id="modal-title">Adicionar tarefa</h2></div><button type="button" class="icon-button" id="modal-close" aria-label="Fechar">×</button></div><label for="entity-title">Título</label><input id="entity-title" maxlength="120" required placeholder="O que precisa ser feito?"/><label for="entity-owner">Responsável</label><select id="entity-owner"><option value="ATLAS">ATLAS — Tráfego</option><option value="CASH">CASH — Finanças</option><option value="JARVIS">JARVIS — Coordenação</option></select><label for="entity-description">Descrição</label><textarea id="entity-description" maxlength="700" rows="4" placeholder="Detalhe a ação ou análise necessária"></textarea><div class="modal-actions"><button type="button" class="button tertiary" id="modal-cancel">Cancelar</button><button type="submit" class="button primary">Salvar</button></div></form></dialog>
