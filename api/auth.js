@@ -1,4 +1,4 @@
-const sec=require('./_security');
+const sec=require('../lib/security');
 module.exports=async function(req,res){
  if(req.method==='GET')return sec.json(res,200,{configured:sec.configured(),authenticated:sec.authenticated(req)});
  if(req.method==='DELETE'){if(!sec.sameOrigin(req))return sec.json(res,403,{error:'Origem inválida'});res.setHeader('Set-Cookie',sec.cookie('',true));return sec.json(res,200,{authenticated:false});}
