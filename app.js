@@ -10,7 +10,7 @@ const INTEGRATIONS=[
  {name:'Kiwify',details:'Vendas aprovadas, reembolsos e taxas. Exige API de servidor validada.',status:'Não conectada a este painel'},
  {name:'Microsoft Clarity',details:'Comportamento e rolagem de visitantes que consentiram.',status:'Não conectada a este painel'},
  {name:'Vercel Analytics',details:'Visitas de página em medição independente do Meta Pixel.',status:'Não conectada a este painel'},
- {name:'GitHub',details:'Histórico versionado da aplicação, com publicação controlada.',status:'Repositório separado pendente'},
+ {name:'GitHub',details:'Histórico versionado da aplicação, com publicação controlada.',status:'Repositório criado; projeto Vercel pendente'},
  {name:'Supabase',details:'Banco persistente para tarefas, métricas, permissões e auditoria.',status:'Ainda não configurado'}
 ];
 const STORAGE='aisaleslab_v1';
