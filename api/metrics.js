@@ -9,7 +9,15 @@ module.exports=async function(req,res){
  if(req.method!=='GET')return sec.json(res,405,{error:'Método não permitido'});
  if(!sec.authenticated(req))return sec.json(res,401,{error:'Sessão não autorizada'});
  const token=process.env.LAB_META_ACCESS_TOKEN;
- if(!token)return sec.json(res,200,{configured:false,source:'Meta Marketing API',campaignId:CAMPAIGN,accountId:ACCOUNT,message:'Configure LAB_META_ACCESS_TOKEN na Vercel para consultar dados reais. Nenhuma estatística de demonstração está sendo apresentada.'});
+ if(!token){
+  const raw=process.env.LAB_META_SNAPSHOT;
+  if(raw){try{
+   const snapshot=JSON.parse(raw);
+   if(snapshot.source!=='Supermetrics Marketing Agent' || snapshot.campaignId!==CAMPAIGN || !Array.isArray(snapshot.ads) || !snapshot.totals || !snapshot.fetchedAt)throw new Error('Invalid snapshot');
+   return sec.json(res,200,{...snapshot,configured:true,isSnapshot:true,source:'Supermetrics Marketing Agent (último relatório sincronizado manualmente)',message:'Relatório verificado, mas não atualizado automaticamente. A atualização em tempo real exige integração própria com a Meta.'});
+  }catch(err){return sec.json(res,503,{configured:false,error:'Relatório da Meta inválido. Solicite nova sincronização.'});}}
+  return sec.json(res,200,{configured:false,source:'Meta Marketing API',campaignId:CAMPAIGN,accountId:ACCOUNT,message:'Aguardando conexão Meta ou relatório seguro do Supermetrics. Nenhuma estatística de demonstração está sendo apresentada.'});
+ }
  const since=String(req.query?.since||'2026-11-05'),until=String(req.query?.until||new Date().toISOString().slice(0,10));
  if(!/^\d{4}-\d{2}-\d{2}$/.test(since)||!/^\d{4}-\d{2}-\d{2}$/.test(until)||since>until||Date.parse(until)-Date.parse(since)>90*86400000)return sec.json(res,400,{error:'Período inválido (máximo 90 dias).'});
  const fields='campaign_id,campaign_name,ad_id,ad_name,spend,impressions,inline_link_clicks,outbound_clicks,actions,action_values';
