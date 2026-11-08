@@ -45,6 +45,17 @@ const initial={tasks:[
 ],approvals:[{id:'a1',title:'Testar novos anúncios somente após validar a medição',owner:'JARVIS',description:'Proposta para criar teste controlado sem aumentar o orçamento, sujeita a aprovação humana e execução separada.',status:'pending'}]};
 function safeLoad(){try{const data=JSON.parse(localStorage.getItem(STORAGE));if(data&&Array.isArray(data.tasks)&&Array.isArray(data.approvals))return data;}catch(e){}return structuredClone(initial);}
 let state=safeLoad(),filter='all',entityType='task';
+window.AISalesLabQueueProposal=function(proposal,report){
+ if(!proposal||typeof proposal.id!=='string'||!report||typeof report.reportFetchedAt!=='string')return {ok:false,error:'Proposta inválida'};
+ const current=state.approvals.find(a=>a.proposalId===proposal.id);
+ if(current)return {ok:false,error:current.status==='pending'?'Esta proposta já está pendente de aprovação.':'Já existe uma decisão registrada para esta proposta neste navegador.'};
+ const evidence=String(proposal.evidence||'').slice(0,750);
+ const limits=String(proposal.limitations||'').slice(0,450);
+ const description=[String(proposal.action||'').slice(0,450),'Justificativa: '+String(proposal.rationale||'').slice(0,550),'Evidência: '+evidence,'Limitação: '+limits,'Fonte: '+report.source,'Relatório: '+report.reportFetchedAt].join('\n\n');
+ state.approvals.push({id:'jarvis-'+proposal.id,proposalId:proposal.id,title:'JARVIS · '+String(proposal.title||'Proposta').slice(0,100),owner:String(proposal.owner||'JARVIS'),description,status:'pending',source:'JARVIS',approvedForExecution:false,createdAt:new Date().toISOString(),reportFetchedAt:report.reportFetchedAt});
+ store();render();show('approvals');return {ok:true};
+};
+
 const $=s=>document.querySelector(s);const $$=s=>Array.from(document.querySelectorAll(s));
 function h(tag,cls,text){let n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=String(text);return n;}
 function store(){try{localStorage.setItem(STORAGE,JSON.stringify(state));}catch(e){}}
@@ -59,7 +70,7 @@ function render(){
  const tasklist=$('#task-list');tasklist.replaceChildren();const filtered=state.tasks.filter(t=>filter==='all'||(filter==='done'?t.done:!t.done));if(!filtered.length)tasklist.append(h('p','empty','Nenhuma tarefa nesta visualização.'));filtered.forEach(t=>tasklist.append(taskRow(t,false)));
 
  const apps=$('#approval-list');apps.replaceChildren();if(!state.approvals.length)apps.append(h('p','empty','Sem solicitações.'));
- state.approvals.slice().reverse().forEach(a=>{let card=h('article','approval-card'),top=h('div','approval-top'),headline=h('h2','',a.title);top.append(headline,h('span','pill',a.status==='pending'?'Pendente':a.status==='approved'?'Aprovada internamente':'Rejeitada'));card.append(top,h('p','',a.description||'Sem descrição.'),h('div','eyebrow','RESPONSÁVEL: '+a.owner));if(a.status==='pending'){let acts=h('div','approval-actions');let accept=h('button','button primary','Aprovar internamente'),reject=h('button','button tertiary','Rejeitar');accept.addEventListener('click',()=>{a.status='approved';store();render();});reject.addEventListener('click',()=>{a.status='rejected';store();render();});acts.append(accept,reject);card.append(acts);}apps.append(card);});
+ state.approvals.slice().reverse().forEach(a=>{let card=h('article','approval-card'),top=h('div','approval-top'),headline=h('h2','',a.title);top.append(headline,h('span','pill',a.status==='pending'?'Pendente':a.status==='approved'?'Aprovada internamente':'Rejeitada'));card.append(top,h('p','',a.description||'Sem descrição.'),h('div','eyebrow','RESPONSÁVEL: '+a.owner));if(a.status==='pending'){let acts=h('div','approval-actions');let accept=h('button','button primary','Aprovar internamente'),reject=h('button','button tertiary','Rejeitar');accept.addEventListener('click',()=>{a.status='approved';store();render();});reject.addEventListener('click',()=>{a.status='rejected';store();render();});acts.append(accept,reject);card.append(acts);}if(a.source==='JARVIS')card.append(h('small','approval-disclaimer','Aprovação de análise: registro local. Não autoriza nem executa mudanças externas.'));apps.append(card);});
  const integr=$('#integration-grid');integr.replaceChildren();INTEGRATIONS.forEach(i=>{let card=h('article','integration-card');card.append(h('strong','',i.name),h('p','',i.details),h('span','pill',i.status));integr.append(card);});
 }
 $$('.nav').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
