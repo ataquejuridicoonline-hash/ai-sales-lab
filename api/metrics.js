@@ -1,4 +1,4 @@
-const sec=require('./_security');
+const sec=require('../lib/security');
 const ACCOUNT='act_810330994745301';
 const CAMPAIGN='120252293321330531';
 function n(x){const z=Number(x);return Number.isFinite(z)?z:0;}
@@ -13,10 +13,10 @@ module.exports=async function(req,res){
  const since=String(req.query?.since||'2026-11-05'),until=String(req.query?.until||new Date().toISOString().slice(0,10));
  if(!/^\d{4}-\d{2}-\d{2}$/.test(since)||!/^\d{4}-\d{2}-\d{2}$/.test(until)||since>until||Date.parse(until)-Date.parse(since)>90*86400000)return sec.json(res,400,{error:'Período inválido (máximo 90 dias).'});
  const fields='campaign_id,campaign_name,ad_id,ad_name,spend,impressions,inline_link_clicks,outbound_clicks,actions,action_values';
- const p=new URLSearchParams({access_token:token,fields,level:'ad',limit:'100',time_range:JSON.stringify({since,until})});
+ const p=new URLSearchParams({fields,level:'ad',limit:'100',time_range:JSON.stringify({since,until})});
  try{
   const rows=[];let url='https://graph.facebook.com/v24.0/'+CAMPAIGN+'/insights?'+p.toString();let pages=0;
-  while(url&&pages<10){const response=await fetch(url,{headers:{Accept:'application/json'},signal:AbortSignal.timeout(14000)});const data=await response.json();if(!response.ok){return sec.json(res,502,{configured:true,error:'Meta API: '+String(data.error?.message||response.status).slice(0,180)});}if(!Array.isArray(data.data))break;rows.push(...data.data);const next=data.paging?.next||null;if(next&&!next.startsWith('https://graph.facebook.com/'))break;url=next;pages++;}
+  while(url&&pages<10){const response=await fetch(url,{headers:{Accept:'application/json',Authorization:'Bearer '+token},signal:AbortSignal.timeout(14000)});const data=await response.json();if(!response.ok){return sec.json(res,502,{configured:true,error:'Meta API: '+String(data.error?.message||response.status).slice(0,180)});}if(!Array.isArray(data.data))break;rows.push(...data.data);const next=data.paging?.next||null;if(next&&!next.startsWith('https://graph.facebook.com/'))break;url=next;pages++;}
   const ads=rows.map(normalize),totals=ads.reduce((acc,a)=>{for(const k of ['spend','impressions','outboundClicks','linkClicks','pageViews','checkouts','purchases','purchaseValue'])acc[k]+=a[k];return acc;},{spend:0,impressions:0,outboundClicks:0,linkClicks:0,pageViews:0,checkouts:0,purchases:0,purchaseValue:0});
   const netPerSale=n(process.env.LAB_NET_PER_SALE||15.62);
   const recommendations=[];
