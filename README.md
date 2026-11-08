@@ -91,3 +91,7 @@ O token fica somente no servidor; os números são atribuições da Meta, não v
 ### Reaproveitamento das conexões existentes
 
 A conexão do Supermetrics Marketing Agent do ChatGPT não disponibiliza um token Graph API para o aplicativo na Vercel. `LAB_META_ACCESS_TOKEN` segue opcional e necessário **somente** para atualização direta automática via Meta Marketing API. Sem ele, a interface do ATLAS não mostra dados inventados nem utiliza a integração privada do ChatGPT sem autorização técnica. O projeto Vercel `receita` guarda `KIWIFY_REPORT_TOKEN` como segredo sensível não recuperável: por isso, CASH reutiliza o código existente por entrada momentânea na interface, sem duplicação de segredo no servidor.
+
+### Dados Supermetrics sem outro token Meta
+
+A variável sensível `LAB_META_SNAPSHOT` contém o último relatório agregado da campanha `Click & Aprenda - Vendas Air Fryer` consultado pelo conector Supermetrics no ChatGPT. `GET /api/metrics` utiliza esse relatório privado quando `LAB_META_ACCESS_TOKEN` não está presente e retorna `isSnapshot: true`, com horário real de sincronização. **Isso não habilita atualizações automáticas**: um novo relatório deve ser consultado e sincronizado para refletir as alterações da campanha. Não publicar o conteúdo dessa variável no GitHub.
