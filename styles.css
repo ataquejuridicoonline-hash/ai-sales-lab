@@ -36,3 +36,5 @@ body.auth-locked .shell{display:none!important}
 .cash-access label{display:block;color:#cdd7e9;font-size:12px;font-weight:700;margin-bottom:6px}
 .cash-access input{width:min(100%,420px);padding:11px 12px;color:#f3f5fc;background:#10192a;border:1px solid #45536d;border-radius:9px}
 .cash-access small{display:block;font-size:11px;color:#8b99b4;margin-top:6px}
+
+.agent-detail{min-height:0!important;color:#91a0bd!important;font-size:11px!important;margin:12px 0 0!important;line-height:1.6}
