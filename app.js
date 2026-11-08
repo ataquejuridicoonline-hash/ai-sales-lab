@@ -45,6 +45,8 @@ const initial={tasks:[
 ],approvals:[{id:'a1',title:'Testar novos anúncios somente após validar a medição',owner:'JARVIS',description:'Proposta para criar teste controlado sem aumentar o orçamento, sujeita a aprovação humana e execução separada.',status:'pending'}]};
 function safeLoad(){try{const data=JSON.parse(localStorage.getItem(STORAGE));if(data&&Array.isArray(data.tasks)&&Array.isArray(data.approvals))return data;}catch(e){}return structuredClone(initial);}
 let state=safeLoad(),filter='all',entityType='task';
+if(!Array.isArray(state.auditRuns))state.auditRuns=[];
+const executingAudits=new Set();
 window.AISalesLabQueueProposal=function(proposal,report){
  if(!proposal||typeof proposal.id!=='string'||!report||typeof report.reportFetchedAt!=='string')return {ok:false,error:'Proposta inválida'};
  const current=state.approvals.find(a=>a.proposalId===proposal.id);
@@ -52,7 +54,7 @@ window.AISalesLabQueueProposal=function(proposal,report){
  const evidence=String(proposal.evidence||'').slice(0,750);
  const limits=String(proposal.limitations||'').slice(0,450);
  const description=[String(proposal.action||'').slice(0,450),'Justificativa: '+String(proposal.rationale||'').slice(0,550),'Evidência: '+evidence,'Limitação: '+limits,'Fonte: '+report.source,'Relatório: '+report.reportFetchedAt].join('\n\n');
- state.approvals.push({id:'jarvis-'+proposal.id,proposalId:proposal.id,title:'JARVIS · '+String(proposal.title||'Proposta').slice(0,100),owner:String(proposal.owner||'JARVIS'),description,status:'pending',source:'JARVIS',approvedForExecution:false,createdAt:new Date().toISOString(),reportFetchedAt:report.reportFetchedAt});
+ state.approvals.push({id:'jarvis-'+proposal.id,proposalId:proposal.id,title:'JARVIS · '+String(proposal.title||'Proposta').slice(0,100),owner:String(proposal.owner||'JARVIS'),description,status:'pending',source:'JARVIS',proposalType:proposal.type||null,approvedForExecution:false,createdAt:new Date().toISOString(),reportFetchedAt:report.reportFetchedAt});
  store();render();show('approvals');return {ok:true};
 };
 
@@ -70,7 +72,60 @@ function render(){
  const tasklist=$('#task-list');tasklist.replaceChildren();const filtered=state.tasks.filter(t=>filter==='all'||(filter==='done'?t.done:!t.done));if(!filtered.length)tasklist.append(h('p','empty','Nenhuma tarefa nesta visualização.'));filtered.forEach(t=>tasklist.append(taskRow(t,false)));
 
  const apps=$('#approval-list');apps.replaceChildren();if(!state.approvals.length)apps.append(h('p','empty','Sem solicitações.'));
- state.approvals.slice().reverse().forEach(a=>{let card=h('article','approval-card'),top=h('div','approval-top'),headline=h('h2','',a.title);top.append(headline,h('span','pill',a.status==='pending'?'Pendente':a.status==='approved'?'Aprovada internamente':'Rejeitada'));card.append(top,h('p','',a.description||'Sem descrição.'),h('div','eyebrow','RESPONSÁVEL: '+a.owner));if(a.status==='pending'){let acts=h('div','approval-actions');let accept=h('button','button primary','Aprovar internamente'),reject=h('button','button tertiary','Rejeitar');accept.addEventListener('click',()=>{a.status='approved';store();render();});reject.addEventListener('click',()=>{a.status='rejected';store();render();});acts.append(accept,reject);card.append(acts);}if(a.source==='JARVIS')card.append(h('small','approval-disclaimer','Aprovação de análise: registro local. Não autoriza nem executa mudanças externas.'));apps.append(card);});
+ state.approvals.slice().reverse().forEach(a=>{
+  const card=h('article','approval-card'),top=h('div','approval-top'),headline=h('h2','',a.title);
+  const run=state.auditRuns.filter(x=>x.approvalId===a.id).slice(-1)[0];
+  const statusText=run?'Auditoria executada (parcial)':a.status==='pending'?'Pendente':a.status==='approved'?'Aprovada internamente':'Rejeitada';
+  top.append(headline,h('span','pill',statusText));
+  card.append(top,h('p','',a.description||'Sem descrição.'),h('div','eyebrow','RESPONSÁVEL: '+a.owner));
+  if(a.status==='pending'){
+   const acts=h('div','approval-actions'),accept=h('button','button primary','Aprovar internamente'),reject=h('button','button tertiary','Rejeitar');
+   accept.addEventListener('click',()=>{a.status='approved';a.approvedAt=new Date().toISOString();store();render();});
+   reject.addEventListener('click',()=>{a.status='rejected';store();render();});
+   acts.append(accept,reject);card.append(acts);
+  }
+  const isAudit=a.source==='JARVIS'&&(a.proposalType==='audit-tracking'||a.title.includes('Auditar tráfego e medição de visitas'));
+  if(isAudit&&a.status==='approved'){
+    if(!run){
+     const act=h('div','approval-actions'),button=h('button','button primary','Executar auditoria de leitura');
+     button.disabled=executingAudits.has(a.id);
+     const hint=h('small','approval-disclaimer','A auditoria usa o relatório Supermetrics atual e não altera anúncios. A confirmação deste botão autoriza apenas esta leitura e geração de relatório.');
+     button.addEventListener('click',async()=>{
+      if(executingAudits.has(a.id))return;
+      executingAudits.add(a.id);button.disabled=true;button.textContent='Executando auditoria...';
+      try{
+       const response=await fetch('/api/audit',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({proposalId:a.proposalId,reportFetchedAt:a.reportFetchedAt,confirmed:true})});
+       const payload=await response.json().catch(()=>({error:'Resposta inválida'}));
+       if(!response.ok)throw Error(payload.error||'Não foi possível concluir a análise');
+       if(payload.type!=='audit-tracking'||payload.status!=='completed_with_pending_checks')throw Error('Relatório inesperado');
+       state.auditRuns.push({approvalId:a.id,createdAt:new Date().toISOString(),report:payload});state.auditRuns=state.auditRuns.slice(-30);store();render();
+       window.AISalesLabSetAgentHealth?.('ATLAS','Auditoria preliminar executada','Relatório gerado com dados do Supermetrics; Clarity e visitas independentes seguem pendentes.');
+      }catch(err){button.disabled=false;button.textContent='Tentar novamente';hint.textContent='Não foi executado: '+err.message+' Se o relatório mudou, gere e aprove novamente a proposta atualizada.';}
+      finally{executingAudits.delete(a.id);}
+     });
+     act.append(button);card.append(act,hint);
+    }else{
+     const report=run.report;
+     const info=h('section','audit-report');
+     info.append(h('h3','','Relatório ATLAS — '+new Date(report.executedAt).toLocaleString('pt-BR')));
+     info.append(h('p','',report.conclusion));
+     const summary=h('p','',report.totals.outboundClicks+' cliques de saída · '+report.totals.pageViews+' LPV atribuídas · '+report.totals.pageViewPerClickPercent+'% LPV/cliques');
+     summary.className='audit-highlight';info.append(summary);
+     const list=h('ul','audit-findings');
+     for(const finding of report.findings||[]){const item=h('li');item.append(h('strong','',finding.title+' — '),document.createTextNode(finding.interpretation));list.append(item);}info.append(list);
+     const title=h('h4','','Verificações ainda pendentes');info.append(title);
+     const pending=h('ul','audit-findings');
+     for(const step of report.steps||[]){const item=h('li','',step.task+': '+step.reason);pending.append(item);}
+     info.append(pending);
+     const controls=h('div','approval-actions');
+     const download=h('button','button secondary','Baixar relatório JSON');
+     download.addEventListener('click',()=>{const data=JSON.stringify(report,null,2);const blob=new Blob([data],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download='atlas-auditoria-'+report.executedAt.slice(0,10)+'.json';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
+     controls.append(download);info.append(controls);card.append(info);
+    }
+  }
+  if(a.source==='JARVIS')card.append(h('small','approval-disclaimer','Aprovação interna e execução de diagnóstico somente de leitura: nenhuma campanha, orçamento, cliente ou pagamento foi modificado. O histórico está salvo apenas neste navegador.'));
+  apps.append(card);
+ });
  const integr=$('#integration-grid');integr.replaceChildren();INTEGRATIONS.forEach(i=>{let card=h('article','integration-card');card.append(h('strong','',i.name),h('p','',i.details),h('span','pill',i.status));integr.append(card);});
 }
 $$('.nav').forEach(b=>b.addEventListener('click',()=>show(b.dataset.view)));
