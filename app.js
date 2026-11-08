@@ -13,6 +13,30 @@ const INTEGRATIONS=[
  {name:'GitHub',details:'Histórico versionado da aplicação, com publicação controlada.',status:'GitHub e deploy de produção conectados'},
  {name:'Supabase',details:'Banco persistente para tarefas, métricas, permissões e auditoria.',status:'Ainda não configurado'}
 ];
+const agentHealth={
+ JARVIS:{label:'Regras prontas',detail:'As recomendações são geradas por regras; não é uma IA autônoma.'},
+ ATLAS:{label:'Aguardando relatório',detail:'Aguardando validação dos dados do Supermetrics.'},
+ CASH:{label:'Estimativa de mídia',detail:'Aguardando conciliação Kiwify para validar receita efetiva.'}
+};
+window.AISalesLabSetAgentHealth=function(id,label,detail){
+ if(!agentHealth[id])return;
+ agentHealth[id]={label:String(label||'').slice(0,80),detail:String(detail||'').slice(0,220)};
+ renderAgents();
+};
+function renderAgents(){
+ const mini=document.querySelector('#agent-mini'),grid=document.querySelector('#agent-grid');
+ if(!mini||!grid)return;
+ mini.replaceChildren();grid.replaceChildren();
+ AGENTS.forEach(a=>{
+  const health=agentHealth[a.id];
+  const row=h('div','agent-mini-item'),ico=h('div','agent-icon',a.icon),txt=h('div');
+  txt.append(h('strong','',a.id),h('small','',a.title));row.append(ico,txt,h('span','pill',health.label));mini.append(row);
+  const card=h('article','agent-card'),icon=h('div','agent-big-icon',a.icon);
+  card.append(icon,h('p','eyebrow','AGENTE '+a.id),h('h2','',a.title),h('p','',a.about));
+  const list=h('ul');a.abilities.forEach(v=>list.append(h('li','',v)));card.append(list);
+  card.append(h('span','pill',health.label),h('p','agent-detail',health.detail));grid.append(card);
+ });
+}
 const STORAGE='aisaleslab_v1';
 const initial={tasks:[
  {id:'t1',title:'Validar Vercel Analytics após publicação',owner:'ATLAS',description:'Comparar as visitas reais registradas com os cliques de saída da Meta no mesmo período.',done:false},
@@ -29,11 +53,11 @@ function taskRow(task,compact){const row=h('div','task-row'+(task.done?' is-done
 function render(){
  const open=state.tasks.filter(t=>!t.done).length;
  $('#task-counter').textContent=String(open);$('#approval-counter').textContent=String(state.approvals.filter(a=>a.status==='pending').length);
- const mini=$('#agent-mini');mini.replaceChildren();AGENTS.forEach(a=>{let row=h('div','agent-mini-item'),ico=h('div','agent-icon',a.icon),txt=h('div');txt.append(h('strong','',a.id),h('small','',a.title));row.append(ico,txt,h('span','pill','Preparado'));mini.append(row);});
+ renderAgents();
  const overview=$('#overview-tasks');overview.replaceChildren();state.tasks.slice(0,4).forEach(t=>overview.append(taskRow(t,true)));
  if(!state.tasks.length)overview.append(h('p','empty','Sem tarefas cadastradas.'));
  const tasklist=$('#task-list');tasklist.replaceChildren();const filtered=state.tasks.filter(t=>filter==='all'||(filter==='done'?t.done:!t.done));if(!filtered.length)tasklist.append(h('p','empty','Nenhuma tarefa nesta visualização.'));filtered.forEach(t=>tasklist.append(taskRow(t,false)));
- const ag=$('#agent-grid');ag.replaceChildren();AGENTS.forEach(a=>{let card=h('article','agent-card'),icon=h('div','agent-big-icon',a.icon);card.append(icon,h('p','eyebrow','AGENTE '+a.id),h('h2','',a.title),h('p','',a.about));let list=h('ul');a.abilities.forEach(v=>list.append(h('li','',v)));card.append(list,h('span','pill','Em preparação'));ag.append(card);});
+
  const apps=$('#approval-list');apps.replaceChildren();if(!state.approvals.length)apps.append(h('p','empty','Sem solicitações.'));
  state.approvals.slice().reverse().forEach(a=>{let card=h('article','approval-card'),top=h('div','approval-top'),headline=h('h2','',a.title);top.append(headline,h('span','pill',a.status==='pending'?'Pendente':a.status==='approved'?'Aprovada internamente':'Rejeitada'));card.append(top,h('p','',a.description||'Sem descrição.'),h('div','eyebrow','RESPONSÁVEL: '+a.owner));if(a.status==='pending'){let acts=h('div','approval-actions');let accept=h('button','button primary','Aprovar internamente'),reject=h('button','button tertiary','Rejeitar');accept.addEventListener('click',()=>{a.status='approved';store();render();});reject.addEventListener('click',()=>{a.status='rejected';store();render();});acts.append(accept,reject);card.append(acts);}apps.append(card);});
  const integr=$('#integration-grid');integr.replaceChildren();INTEGRATIONS.forEach(i=>{let card=h('article','integration-card');card.append(h('strong','',i.name),h('p','',i.details),h('span','pill',i.status));integr.append(card);});
