@@ -24,3 +24,10 @@ body.auth-locked .shell{display:none!important}
 .insight-list p{margin:8px 0;font-size:12px}
 .insight-alert{padding:11px 13px;background:#302d21;border-left:3px solid #ffc97b;border-radius:5px}
 #data-status{font-size:12px}
+
+.cash-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:17px}
+.cash-metrics article{background:#1e2940;border:1px solid #39475f;padding:14px;border-radius:10px}
+.cash-metrics span{display:block;color:#a0abc5;font-size:11px}
+.cash-metrics strong{display:block;font-size:22px;margin-top:6px}
+.cash-note{font-size:11px;color:#8b99b4!important}
+@media(max-width:780px){.cash-metrics{grid-template-columns:repeat(2,1fr)}}
