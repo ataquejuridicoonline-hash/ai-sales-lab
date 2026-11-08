@@ -31,3 +31,8 @@ body.auth-locked .shell{display:none!important}
 .cash-metrics strong{display:block;font-size:22px;margin-top:6px}
 .cash-note{font-size:11px;color:#8b99b4!important}
 @media(max-width:780px){.cash-metrics{grid-template-columns:repeat(2,1fr)}}
+
+.cash-access{padding:11px 0 6px}
+.cash-access label{display:block;color:#cdd7e9;font-size:12px;font-weight:700;margin-bottom:6px}
+.cash-access input{width:min(100%,420px);padding:11px 12px;color:#f3f5fc;background:#10192a;border:1px solid #45536d;border-radius:9px}
+.cash-access small{display:block;font-size:11px;color:#8b99b4;margin-top:6px}
