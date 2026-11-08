@@ -106,3 +106,12 @@ Na aba **Agentes → JARVIS → Analisar campanha**, as propostas aparecem com p
 Regras ativas: sinalização de dados desatualizados; discrepância entre cliques de saída e PageViews atribuídas pela Meta; CPA acima da contribuição estimada; anúncios sem compras atribuídas; e necessidade de conciliação dos pagamentos Kiwify. Nenhuma dessas evidências, isoladamente, comprova fraude ou justifica uma pausa automática.
 
 **Próximas evoluções:** autenticação individual e banco de auditoria para decisões compartilhadas; conectores de execução separados com aprovação vinculada a ação exata; integração de LLM como segunda camada revisora após configurar autorização/custos; atualização de dados de visitas reais e pagamentos aprovados com as fontes oficiais. Não atribuir autonomia de IA à versão atual.
+
+
+## Execução de auditorias ATLAS aprovadas (v4)
+
+O endpoint autenticado `POST /api/audit` implementa **somente execução de diagnóstico de leitura**: recebe `proposalId`, `reportFetchedAt` e `confirmed: true`, confere origem, sessão e compatibilidade com uma proposta `audit-tracking` gerada pelo motor de decisões. A leitura usa o último `LAB_META_SNAPSHOT`, analisa os dados agregados de anúncios e devolve relatório com evidências, limitações, checklist e próximos passos. **Não acessa a API de alteração Meta e não modifica anúncios, páginas ou pagamentos.**
+
+Em **Agentes**, gere a proposta JARVIS de auditar tráfego. Em **Aprovações**, aprove-a e clique em **Executar auditoria de leitura**. Os registros anteriores já aprovados são reconhecidos quando possuem ID e horário do relatório ainda válidos. Após a execução, o relatório aparece no cartão, com botão para baixar JSON. O histórico de auditorias fica apenas no localStorage deste navegador (últimos 30 relatórios); não há sincronização multiusuário ou trilha de auditoria remota.
+
+**Se o Supermetrics sincronizar um novo snapshot entre aprovação e execução**, o servidor rejeita o relatório anterior para evitar agir sobre dados diferentes dos aprovados; é necessário gerar e aprovar nova proposta. As auditorias identificam discrepâncias de LPV atribuídas versus cliques, mas não inventam dados de Vercel Analytics, Clarity ou breakdown por posicionamento; estes passos ficam expressamente pendentes. A execução é disparada pelo clique do usuário, não em background e não por um agente LLM autônomo.
