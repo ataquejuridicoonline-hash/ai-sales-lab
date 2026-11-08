@@ -25,6 +25,15 @@ async function clarity(code,days){
  return {source:'Microsoft Clarity — sessões com consentimento',queriedAt:data.queriedAt,windowHours:data.windowHours,timezone:data.timezone,projectId:data.projectId,...extractClarity(data)};
 }
 async function vercel(){
+ const report=process.env.LAB_VERCEL_SNAPSHOT;
+ if(report){
+  try{
+   const snap=JSON.parse(report);
+   if(snap.projectId===VERCEL_PROJECT&&snap.path==='/'&&Number.isFinite(snap.pageviews)&&Number.isFinite(snap.visitors)&&snap.period?.since&&snap.period?.until){
+    return {status:snap.collectionVerified?'available':'collection_unverified',source:'Vercel Web Analytics — leitura via conexão existente',pageviews:snap.pageviews,visitors:snap.visitors,period:snap.period,queriedAt:snap.queriedAt,isSnapshot:true,collectionVerified:!!snap.collectionVerified,message:snap.warning||'Leitura da API não é necessariamente prova da eficácia da coleta.'};
+   }
+  }catch(e){}
+ }
  const token=process.env.LAB_VERCEL_ANALYTICS_TOKEN;
  if(!token)return {status:'requires_vercel_token',source:'Vercel Web Analytics',message:'A API de Web Analytics precisa de um token de acesso com permissão de leitura do projeto receita. O conector ChatGPT não disponibiliza esse token para o site.'};
  const u=new URL('https://api.vercel.com/v1/query/web-analytics/visits/count');
