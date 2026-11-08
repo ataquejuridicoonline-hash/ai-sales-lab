@@ -32,8 +32,43 @@ async function loadSales(){
  }catch(err){$('#cash-status').textContent='Não foi possível consultar vendas: '+err.message;window.AISalesLabSetAgentHealth?.('CASH','Kiwify não validada','A consulta de pagamentos não foi confirmada. A análise permanece estimada pela Meta.');}
  finally{button.disabled=false;}
 }
+let jarvisReport=null;
+async function runJarvis(){
+ const button=$('#jarvis-analyze'),container=$('#jarvis-proposals');
+ button.disabled=true;$('#jarvis-status').textContent='Analisando relatório validado do ATLAS...';container.replaceChildren();
+ try{
+  const {response,data}=await request('/api/decisions');
+  if(response.status===401){$('#jarvis-status').textContent='A sessão expirou. Entre novamente.';return;}
+  if(!response.ok)throw Error(data.error||'Relatório indisponível');
+  if(!Array.isArray(data.proposals))throw Error('Formato de propostas inválido');
+  jarvisReport=data;
+  const moment=new Date(data.reportFetchedAt).toLocaleString('pt-BR',{timeZone:'America/Campo_Grande'});
+  $('#jarvis-status').textContent=data.proposals.length+' proposta(s) geradas · base: '+moment+' (MS) · '+(data.freshness==='outdated'?'relatório desatualizado':data.freshness==='attention'?'atualização recomendada':'relatório recente')+'. Nenhuma ação externa autorizada.';
+  data.proposals.forEach(proposal=>{
+   const card=document.createElement('article');card.className='jarvis-proposal';
+   const heading=document.createElement('div');heading.className='jarvis-proposal-head';
+   const title=document.createElement('h3');title.textContent=proposal.title;
+   const badge=document.createElement('span');badge.className='pill';badge.textContent=proposal.priority==='high'?'Alta prioridade':'Prioridade moderada';heading.append(title,badge);
+   const rationale=document.createElement('p');rationale.textContent=proposal.rationale;
+   const evidence=document.createElement('p');evidence.className='jarvis-evidence';evidence.textContent='Evidência: '+proposal.evidence;
+   const action=document.createElement('p');action.textContent='Ação proposta: '+proposal.action;
+   const limitation=document.createElement('small');limitation.className='jarvis-limitation';limitation.textContent=proposal.limitations;
+   const send=document.createElement('button');send.className='button secondary';send.type='button';send.textContent='Enviar para minha aprovação';
+   send.addEventListener('click',()=>{
+    const result=window.AISalesLabQueueProposal?.(proposal,jarvisReport);
+    if(!result?.ok){send.textContent=result?.error||'Não foi possível registrar';send.disabled=true;}
+   });
+   card.append(heading,rationale,evidence,action,limitation,send);container.append(card);
+  });
+  window.AISalesLabSetAgentHealth?.('JARVIS','Propostas geradas',data.proposals.length+' propostas fundamentadas no relatório ATLAS de '+moment+'. Execução de anúncios desabilitada.');
+ }catch(err){
+  $('#jarvis-status').textContent='Análise indisponível: '+err.message;
+  window.AISalesLabSetAgentHealth?.('JARVIS','Análise indisponível','Sem relatório validado; nenhuma proposta foi criada.');
+ }finally{button.disabled=false;}
+}
 $('#login-form').addEventListener('submit',async e=>{e.preventDefault();const input=$('#admin-password'),button=$('#login-submit'),password=input.value;button.disabled=true;say('Validando acesso...');try{const {response,data}=await request('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});input.value='';if(!response.ok)throw Error(data.error||'Acesso recusado');unlock();}catch(err){say(err.message);}finally{button.disabled=false;}});
 $('#metrics-refresh').addEventListener('click',loadMetrics);
+$('#jarvis-analyze').addEventListener('click',runJarvis);
 $('#logout-button').addEventListener('click',async()=>{try{await request('/api/auth',{method:'DELETE'});}finally{window.location.reload();}});
 $('#sales-refresh').addEventListener('click',loadSales);
 check();
