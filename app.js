@@ -120,7 +120,46 @@ function render(){
      const controls=h('div','approval-actions');
      const download=h('button','button secondary','Baixar relatório JSON');
      download.addEventListener('click',()=>{const data=JSON.stringify(report,null,2);const blob=new Blob([data],{type:'application/json'}),url=URL.createObjectURL(blob),anchor=document.createElement('a');anchor.href=url;anchor.download='atlas-auditoria-'+report.executedAt.slice(0,10)+'.json';anchor.click();setTimeout(()=>URL.revokeObjectURL(url),1000);});
-     controls.append(download);info.append(controls);card.append(info);
+     controls.append(download);info.append(controls);
+     const sources=h('section','audit-sources');
+     sources.append(h('h4','','Fontes independentes — Clarity e Vercel Analytics'));
+     sources.append(h('p','audit-disclaimer','O Clarity consulta somente após seu clique (limite oficial de 10 solicitações/dia). Use o mesmo código privado do relatório antigo. A Vercel utiliza o último snapshot do conector. Janelas de medição diferentes não são diretamente comparáveis.'));
+     const creds=h('div','audit-source-controls'),code=h('input'),days=h('select'),fetchButton=h('button','button secondary','Consultar fontes agora');
+     code.type='password';code.maxLength=512;code.autocomplete='off';code.placeholder='Código privado Kiwify/Clarity';
+     code.setAttribute('aria-label','Código privado do Clarity existente');
+     for(const [val,label] of [['1','Últimas 24 horas'],['2','Últimas 48 horas'],['3','Últimas 72 horas']]){const option=h('option','',label);option.value=val;days.append(option);}
+     fetchButton.type='button';creds.append(code,days,fetchButton);sources.append(creds);
+     const status=h('p','audit-source-status','Aguardando consulta. O código não será salvo.');
+     sources.append(status);
+     const evidence=h('div','audit-evidence');sources.append(evidence);
+     const renderEvidence=(data)=>{
+       evidence.replaceChildren();
+       if(!data)return;
+       const cl=data.clarity||{},v=data.vercel||{};
+       const cCard=h('div','audit-evidence-item');cCard.append(h('strong','','Microsoft Clarity'));
+       const cltxt=cl.status==='available'?'Sessões medidas na home: '+cl.sessions+' (janela móvel de '+cl.windowHours+'h); bots identificados: '+cl.botSessions+'.':cl.message||cl.note||'Sem métricas confirmadas.';
+       cCard.append(h('p','',cltxt));
+       const vCard=h('div','audit-evidence-item');vCard.append(h('strong','','Vercel Web Analytics'));
+       const vtxt=v.status==='collection_unverified'?'A API retornou '+v.pageviews+' pageviews e '+v.visitors+' visitantes, mas a coleta ainda NÃO foi validada; estes zeros não significam ausência de tráfego.':v.status==='available'?'Pageviews da API: '+(v.pageviews??v.pageVisits??'não informado')+'. Verifique o recorte de datas.':v.message||'Sem leitura disponível.';
+       vCard.append(h('p','',vtxt));
+       evidence.append(cCard,vCard);
+       evidence.append(h('p','audit-disclaimer',data.comparison||'Não compare métricas de janelas diferentes.'));
+     };
+     renderEvidence(run.sources);
+     fetchButton.addEventListener('click',async()=>{
+       if(fetchButton.disabled)return;
+       fetchButton.disabled=true;status.textContent='Consultando os relatórios oficiais...';
+       const accessCode=code.value;code.value='';
+       try{
+         const resp=await fetch('/api/traffic-sources',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({accessCode,days:Number(days.value)})});
+         const data=await resp.json().catch(()=>({}));
+         if(!resp.ok)throw Error(data.error||'Consulta não autorizada');
+         run.sources=data;store();renderEvidence(data);
+         status.textContent='Consulta concluída. Os dados encontrados foram vinculados a esta auditoria local. '+(data.clarity?.status==='available'?'Clarity retornou sessões.':'Clarity ainda não foi validado.');
+       }catch(e){status.textContent='Falha: '+e.message;}
+       finally{fetchButton.disabled=false;}
+     });
+     info.append(sources);card.append(info);
     }
   }
   if(a.source==='JARVIS')card.append(h('small','approval-disclaimer','Aprovação interna e execução de diagnóstico somente de leitura: nenhuma campanha, orçamento, cliente ou pagamento foi modificado. O histórico está salvo apenas neste navegador.'));
