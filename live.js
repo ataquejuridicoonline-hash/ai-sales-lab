@@ -30,6 +30,7 @@ async function loadSales(){
 }
 $('#login-form').addEventListener('submit',async e=>{e.preventDefault();const input=$('#admin-password'),button=$('#login-submit'),password=input.value;button.disabled=true;say('Validando acesso...');try{const {response,data}=await request('/api/auth',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password})});input.value='';if(!response.ok)throw Error(data.error||'Acesso recusado');unlock();}catch(err){say(err.message);}finally{button.disabled=false;}});
 $('#metrics-refresh').addEventListener('click',loadMetrics);
+$('#logout-button').addEventListener('click',async()=>{try{await request('/api/auth',{method:'DELETE'});}finally{window.location.reload();}});
 $('#sales-refresh').addEventListener('click',loadSales);
 check();
 })();
