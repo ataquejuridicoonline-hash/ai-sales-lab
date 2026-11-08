@@ -6,7 +6,7 @@ const AGENTS=[
  {id:'CASH',title:'Auditor financeiro',icon:'◈',about:'Concilia mídia, custos e vendas aprovadas para impedir otimizações que geram cliques baratos e prejuízo.',abilities:['Calcular CPA e margem','Monitorar gasto e orçamento','Sinalizar prejuízos e anomalias']}
 ];
 const INTEGRATIONS=[
- {name:'Meta Ads',details:'Dados de campanhas, posicionamentos, cliques e compras atribuídas.',status:'API preparada; token Meta independente não configurado'},
+ {name:'Meta Ads',details:'Dados de campanhas, posicionamentos, cliques e compras atribuídas.',status:'Relatório Supermetrics privado sincronizado; leitura automática pendente'},
  {name:'Kiwify',details:'Vendas aprovadas, reembolsos e taxas. Exige API de servidor validada.',status:'Consulta pelo código já existente, sem armazenar novo token'},
  {name:'Microsoft Clarity',details:'Comportamento e rolagem de visitantes que consentiram.',status:'Não conectada a este painel'},
  {name:'Vercel Analytics',details:'Visitas de página em medição independente do Meta Pixel.',status:'Não conectada a este painel'},
