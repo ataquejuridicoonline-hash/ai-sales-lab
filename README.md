@@ -60,7 +60,7 @@ Acesse Vercel → ai-sales-lab → Settings → Environment Variables, escolha P
 - `LAB_ADMIN_PASSWORD`: senha **nova, exclusiva para AI SALES LAB** (mínimo de 16 caracteres).
 - `LAB_SESSION_SECRET`: segredo aleatório de sessão com 32+ caracteres, diferente da senha. Gere com gerenciador de senhas ou `openssl rand -hex 32`.
 - `LAB_META_ACCESS_TOKEN`: token Meta Marketing API com permissão de **leitura de anúncios** na conta `act_810330994745301`. Não adicione permissões de modificação ou coloque o token neste repositório.
-- `LAB_KIWIFY_REPORT_TOKEN`: **a mesma chave privada** usada na variável `KIWIFY_REPORT_TOKEN` do projeto `receita-jade`, para consultar o resumo privado da Kiwify entre servidores. Esta chave não é enviada ao navegador.\n- `LAB_NET_PER_SALE` (opcional): contribuição líquida estimada por venda antes de mídia, padrão `15.62`. Não equivale à conciliação financeira.
+- **Kiwify sem novo token:** o painel pede, somente no clique de consulta, o mesmo código privado do relatório de Kiwify. Ele é enviado à função autenticada `POST /api/sales`, encaminhado pelo servidor ao relatório existente e não é armazenado no browser nem na Vercel da agência. Nunca compartilhe o código em chat.\n- `LAB_NET_PER_SALE` (opcional): contribuição líquida estimada por venda antes de mídia, padrão `15.62`. Não equivale à conciliação financeira.
 
 Salve as variáveis no projeto **ai-sales-lab**, não no projeto de vendas `receita-jade`. Faça um novo deploy em Production após configurar/alterar variáveis. Nunca cole segredos em chat, arquivos GitHub, HTML ou prints.
 
@@ -69,14 +69,14 @@ Salve as variáveis no projeto **ai-sales-lab**, não no projeto de vendas `rece
 - `GET /api/auth`: informa se a aplicação está configurada e se a sessão é válida.
 - `POST /api/auth`: recebe JSON `{"password":"..."}`; em caso de sucesso define cookie assinado.
 - `DELETE /api/auth`: encerra a sessão.
-- `GET /api/sales`: **somente com sessão**, consulta o relatório Kiwify privado já existente em `receita-jade` e devolve apenas totais agregados. Se o relatório da origem incluir outros produtos, não atribua os valores ao e-book sem ajustar `KIWIFY_PRODUCT_ID` no projeto de origem.\n- `GET /api/metrics`: **somente com sessão**, consulta a Meta Graph Marketing API na campanha `120252293321330531`, período padrão de 05/11/2026 até hoje; aceita `?since=YYYY-MM-DD&until=YYYY-MM-DD` limitado a 90 dias.
+- `POST /api/sales`: **somente com sessão**, recebe temporariamente `accessCode` do relatório Kiwify existente, consulta o projeto `receita-jade` e devolve apenas totais agregados. Se o relatório da origem incluir outros produtos, não atribua os valores ao e-book sem ajustar `KIWIFY_PRODUCT_ID` no projeto de origem.\n- `GET /api/metrics`: **somente com sessão**, consulta a Meta Graph Marketing API na campanha `120252293321330531`, período padrão de 05/11/2026 até hoje; aceita `?since=YYYY-MM-DD&until=YYYY-MM-DD` limitado a 90 dias.
 
 O token fica somente no servidor; os números são atribuições da Meta, não vendas certificadas pela Kiwify. As leituras não autorizam mudanças de campanha.
 
 ### Situação das integrações
 
 - Meta Ads: implementada no código, **aguardando `LAB_META_ACCESS_TOKEN` com permissão ads_read e teste de produção**.
-- Kiwify: integração entre servidores implementada, aguardando `LAB_KIWIFY_REPORT_TOKEN`, deploy e teste de produção. CASH mostra pagamentos aprovados, pendências e reembolsos de modo separado das estimativas Meta.
+- Kiwify: integração entre servidores implementada, aguardando entrada temporária do código privado existente, deploy e teste de produção. CASH mostra pagamentos aprovados, pendências e reembolsos de modo separado das estimativas Meta.
 - Clarity e Vercel Analytics: pendentes de leitura integrada neste painel.
 - Tarefas e aprovações: armazenadas localmente no navegador; ainda não são ações remotas nem aprovação com auditoria centralizada.
 - Os agentes são regras de diagnóstico e interface de trabalho, **não serviços autônomos com modelos de IA executando em segundo plano**.
@@ -87,3 +87,7 @@ O token fica somente no servidor; os números são atribuições da Meta, não v
 - O login por senha compartilhada exige uma proteção contra força bruta (Vercel Firewall/WAF) antes de ampla exposição.
 - O endpoint de métricas faz consultas em tempo real, não histórico persistido e não possui cobrança/alertas periódicos próprios.
 - Nunca deduza que cliques sem PageView provam carregamento defeituoso; consentimento, atribuição e bloqueadores também influenciam.
+
+### Reaproveitamento das conexões existentes
+
+A conexão do Supermetrics Marketing Agent do ChatGPT não disponibiliza um token Graph API para o aplicativo na Vercel. `LAB_META_ACCESS_TOKEN` segue opcional e necessário **somente** para atualização direta automática via Meta Marketing API. Sem ele, a interface do ATLAS não mostra dados inventados nem utiliza a integração privada do ChatGPT sem autorização técnica. O projeto Vercel `receita` guarda `KIWIFY_REPORT_TOKEN` como segredo sensível não recuperável: por isso, CASH reutiliza o código existente por entrada momentânea na interface, sem duplicação de segredo no servidor.
