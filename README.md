@@ -95,3 +95,14 @@ A conexão do Supermetrics Marketing Agent do ChatGPT não disponibiliza um toke
 ### Dados Supermetrics sem outro token Meta
 
 A variável sensível `LAB_META_SNAPSHOT` contém o último relatório agregado da campanha `Click & Aprenda - Vendas Air Fryer` consultado pelo conector Supermetrics no ChatGPT. `GET /api/metrics` utiliza esse relatório privado quando `LAB_META_ACCESS_TOKEN` não está presente e retorna `isSnapshot: true`, com horário real de sincronização. **Isso não habilita atualizações automáticas**: um novo relatório deve ser consultado e sincronizado para refletir as alterações da campanha. Não publicar o conteúdo dessa variável no GitHub.
+
+
+## JARVIS — motor de decisões (v3)
+
+A API autenticada `GET /api/decisions` lê exclusivamente `LAB_META_SNAPSHOT` (último relatório Supermetrics guardado em variável sensível no servidor), valida a campanha `120252293321330531`, calcula idade do relatório e gera propostas auditáveis com evidência e limitações. O motor atual é **determinístico, baseado em regras**, não utiliza modelos generativos e não possui execução autônoma de alterações de anúncios.
+
+Na aba **Agentes → JARVIS → Analisar campanha**, as propostas aparecem com prioridade, justificativa, métricas de referência e botão **Enviar para minha aprovação**. O botão salva um registro na fila de aprovações **somente no armazenamento local deste navegador**. Aprovar ali não altera Meta Ads, orçamento, landing page, Kiwify nem dispara ações de rede. Propostas com mesma ID não são duplicadas no mesmo navegador; a análise usa o período e a campanha como base de identificação.
+
+Regras ativas: sinalização de dados desatualizados; discrepância entre cliques de saída e PageViews atribuídas pela Meta; CPA acima da contribuição estimada; anúncios sem compras atribuídas; e necessidade de conciliação dos pagamentos Kiwify. Nenhuma dessas evidências, isoladamente, comprova fraude ou justifica uma pausa automática.
+
+**Próximas evoluções:** autenticação individual e banco de auditoria para decisões compartilhadas; conectores de execução separados com aprovação vinculada a ação exata; integração de LLM como segunda camada revisora após configurar autorização/custos; atualização de dados de visitas reais e pagamentos aprovados com as fontes oficiais. Não atribuir autonomia de IA à versão atual.
